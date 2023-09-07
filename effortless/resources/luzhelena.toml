@@ -1,0 +1,30 @@
+[project]
+includes = ["dao"]
+packages = [
+    "edu.usta.configuracion",
+    "edu.usta.daos",
+    "edu.usta.entidades",
+    "edu.usta.formularios",
+    "edu.usta.iconos",
+    "edu.usta.interfaces"
+]
+
+[[classes]]
+package = "edu.usta.configuracion"
+name = "MiConexion"
+origin = "$"
+
+[[files]]
+folder = "misLibrerias"
+name = "mariadb-java-client.jar"
+origin = "$"
+
+[[files]]
+folder = "misLibrerias"
+name = "flatlaf-3.2.jar"
+origin = "$"
+
+[[files]]
+folder = "miBasedatos"
+name = "%basedatos%.sql"
+create = true

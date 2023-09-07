@@ -1,0 +1,10 @@
+[project]
+[[project.custom_handlers]]
+name = "DaoEntity"
+array = "dao_entities"
+handler = "dao_entity"
+
+[[classes]]
+package = "edu.usta.interfaces"
+name = "Funcionalidad"
+origin = "$"
