@@ -9,11 +9,6 @@ packages = [
     "edu.usta.interfaces"
 ]
 
-[[classes]]
-package = "edu.usta.configuracion"
-name = "MiConexion"
-origin = "$"
-
 [[files]]
 folder = "misLibrerias"
 name = "mariadb-java-client.jar"

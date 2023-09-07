@@ -5,6 +5,11 @@ array = "dao_entities"
 handler = "dao_entity"
 
 [[classes]]
+package = "edu.usta.configuracion"
+name = "MiConexion"
+origin = "$"
+
+[[classes]]
 package = "edu.usta.interfaces"
 name = "Funcionalidad"
 origin = "$"
