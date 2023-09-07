@@ -27,7 +27,7 @@ def includeTomls(config, includes):
     del result['project']['includes']
 
     for include in includes:
-        include_config = toml.loads(files('pooUp.resources').joinpath(include + '.toml').read_text())
+        include_config = toml.loads(files('effortless.resources').joinpath(include + '.toml').read_text())
         result = mergeConfig(result, include_config)
 
     new_includes = getConfig(getConfig(result, 'project'), 'includes')

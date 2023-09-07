@@ -11,16 +11,18 @@ class Field:
         self.init = getConfig(field, 'init')
 
     def fromFields(fields):
-        objFields = []
+        objs = []
 
         if fields:
             for field in fields:
-                objFields.append(Field(field))
+                objs.append(Field(field))
 
-        return objFields
+        return objs
 
     def generate(self, t):
-        if self.init:
-            init = ' = ' + self.init
+        self.gen_init = ''
 
-        return self.template.format(t=t, accessor=self.accessor, type=self.type, name=self.name, init=init)
+        if self.init:
+            self.gen_init = ' = ' + self.init
+
+        return self.template.format(t=t, accessor=self.accessor, type=self.type, name=self.name, init=self.gen_init)

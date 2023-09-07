@@ -7,7 +7,7 @@ from .config import getConfig
 class Clazz:
     template = """package {package};
 {inports}public class {name}{extends}{implements} {{
-    {fields}{methods}}}
+{fields}{methods}}}
 """
     import_template = "import {inport};\n"
 
@@ -31,24 +31,34 @@ class Clazz:
         return objs
 
     def genImports(self):
+        self.gen_imports = ''
+
         if self.imports:
             for inport in self.imports:
-                self.gen_imports += self.import_template.format(inport)
+                self.gen_imports += self.import_template.format(inport=inport)
 
     def genExtends(self):
+        self.gen_extends = ''
+
         if self.extends:
             self.gen_extends = ' extends ' + self.extends
 
     def genImplements(self):
+        self.gen_implements = ''
+
         if self.implements:
-            self.gen_implements = ' implements ' + self.implements.join(',')
+            self.gen_implements = ' implements ' + ','.join(self.implements)
 
     def genFields(self, t):
+        self.gen_fields = ''
+
         if self.fields:
             for field in self.fields:
                 self.gen_fields += field.generate(t)
 
     def genMethods(self, t):
+        self.gen_methods = ''
+
         if self.methods:
             for method in self.methods:
                 self.gen_methods += method.generate(t)
