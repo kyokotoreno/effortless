@@ -13,7 +13,7 @@ class Field:
     def fromFields(fields):
         objFields = []
 
-        if not fields == None:
+        if fields:
             for field in fields:
                 objFields.append(Field(field))
 

@@ -14,7 +14,7 @@ class Method:
     def fromMethods(methods):
         objs = []
 
-        if not methods == None:
+        if methods:
             for method in methods:
                 objs.append(Method(method))
 

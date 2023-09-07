@@ -13,7 +13,7 @@ class File:
     def fromFiles(files):
         objs = []
 
-        if not files == None:
+        if files:
             for file in files:
                 objs.append(File(file))
 

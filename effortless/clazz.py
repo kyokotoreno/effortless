@@ -22,13 +22,11 @@ class Clazz:
         self.origin = getConfig(clazz, 'origin')
 
     def fromClasses(classes):
-        if not classes:
-            return
-
         objs = []
 
-        for clazz in classes:
-            objs.append(Clazz(clazz))
+        if classes:
+            for clazz in classes:
+                objs.append(Clazz(clazz))
 
         return objs
 
