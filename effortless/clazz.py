@@ -64,6 +64,9 @@ class Clazz:
 
             if self.origin == '$':
                 self.gen = files('effortless.resources').joinpath(filename).read_text()
+            elif self.origin:
+                with open(self.origin, 'r') as o:
+                    self.gen = o.read()
             else:
                 self.genImports()
                 self.genExtends()
