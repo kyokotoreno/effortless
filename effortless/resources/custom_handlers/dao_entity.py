@@ -28,7 +28,7 @@ class CustomHandler:
             'name': 'registrar',
             'annotations': ['Override'],
             'arguments': [{'type': '%entity_name%', 'name': 'elObjeto'}],
-            'body': '''cadenaSql = "insert into %entity_name_plural% (%entity_fields%) values (%values%);";
+            'body': '''cadenaSql = "INSERT INTO %entity_name_plural% (%entity_fields%) VALUES (%values%)";
 try {
     consulta = conexion.prepareStatement(cadenaSql);
 %consulta_sets%
@@ -46,7 +46,7 @@ try {
             'name': 'consultar',
             'annotations': ['Override'],
             'arguments': [{'type': 'String', 'name': 'orden'}],
-            'body': '''cadenaSql = "select %entity_fields% from %entity_name_plural% order by " + orden + ";";
+            'body': '''cadenaSql = "SELECT %entity_fields% FROM %entity_name_plural% ORDER BY " + orden;
 try {
     consulta = conexion.prepareStatement(cadenaSql);
     registros = consulta.executeQuery();
@@ -135,19 +135,26 @@ try {
             'String': 'String',
             'Short': 'Short'
         }
-
-        return map[type.removesuffix(' ')]
+		
+        try:
+            return map[type.removesuffix(' ')]
+        except KeyError:
+            return None
 
     def genDaoMethodRegister(self, daoClazz):
         setter_i = 1
         gen_daosetters = ''
-        for getter in list(filter(lambda x : not x.name.startswith('getCod'), self.gen_getters)):
+        for getter in list(filter(lambda x : not x.name.startswith('getCod' + self.name), self.gen_getters)):
             type = self.mapTypeToRegistryType(getter.return_type)
-            #f"%entity_name_lower%.{getter.name}(registros.get{type}({getter_i})):\n"
-            gen_daosetters += f'    consulta.set{type}({setter_i}, elObjeto.{getter.name}());\n'
+            if not type:
+                gen_daosetters += f'    // Custom Type {getter.return_type.removesuffix(" ")}, please program manually\n'
+                print(f'WARNING!: Custom Type {getter.return_type.removesuffix(" ")}, please program manually in method register dao_entity \'{self.name}\'')
+            else:
+                #f"%entity_name_lower%.{getter.name}(registros.get{type}({getter_i})):\n"
+                gen_daosetters += f'    consulta.set{type}({setter_i}, elObjeto.{getter.name}());\n'
             setter_i += 1
 
-        mfields = [*filter(lambda x : not x.name.startswith('cod_'), self.fields)]
+        mfields = [*filter(lambda x : not x.name.startswith(underscore('Cod' + self.name)), self.fields)]
 
         defines = {
             'values': ', '.join(['?'] * len(mfields)),
@@ -173,7 +180,11 @@ try {
         gen_daogetters = ''
         for getter in self.gen_getters:
             type = self.mapTypeToRegistryType(getter.return_type)
-            gen_daogetters += f'        {self.name.lower()}.{getter.name.replace("get", "set")}(registros.get{type}({getter_i}));\n'
+            if not type:
+                gen_daogetters += f'        // Custom Type {getter.return_type.removesuffix(" ")}, please program manually\n'
+                print(f'WARNING!: Custom Type {getter.return_type.removesuffix(" ")}, please program manually in method consult dao_entity \'{self.name}\'')
+            else:
+                gen_daogetters += f'        {self.name.lower()}.{getter.name.replace("get", "set")}(registros.get{type}({getter_i}));\n'
             getter_i += 1
 
         defines = {
@@ -284,7 +295,7 @@ try {
         entityConstructor.is_constructor = True
         entityConstructor.accessor = 'public'
         entityConstructor.name = self.name
-        mfields = [*filter(lambda x : not x.name.startswith('cod_'), self.fields)]
+        mfields = [*filter(lambda x : not x.name.startswith(underscore('Cod' + self.name)), self.fields)]
 
         constSetters = []
         entityConstructor.arguments = []
