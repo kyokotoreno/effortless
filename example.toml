@@ -1,32 +1,14 @@
 [project]
-name = "poo_taller014_pruebaautogen"
-includes = ["luzhelena"]
+name = "" # Project Name
+includes = ["luzhelena"] # Example include
 
 [defines]
-basedatos = "bd_revistas"
+basedatos = ""
 basedatos_content = """
-drop database if exists bd_revistas;
-create database bd_revistas;
-
-create table bd_revistas.revistas(
-    cod_revista integer auto_increment,
-    nombre_revista varchar(200) not null,
-    categoria_revista varchar(200) not null,
-    issn_revista varchar(20) not null,
-    primary key(cod_revista)
-);
-
-create table bd_revistas.articulos(
-    cod_articulo integer auto_increment,
-    nombre_articulo varchar(200) not null,
-    cantidad_vistas_articulo smallint not null,
-    open_articulo integer not null,
-    primary key(cod_articulo)
-);
 """
 user = "user_poo"
 pass = "123456"
-conexion_establecida = "\"[OK] Conexion establecida %s@%s\", this.usuario, this.url"
+conexion_establecida = "\"conectado a mysql\""
 
 [nbproject]
 
