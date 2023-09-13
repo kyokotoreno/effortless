@@ -4,7 +4,7 @@ from .config import getConfig
 class CustomHandler:
     def __init__(self, customHandler):
         self.name = getConfig(customHandler, 'name')
-        self.array = getConfig(customHandler, 'array')
+        self.key = getConfig(customHandler, 'key')
         self.handler = getConfig(customHandler, 'handler')
 
         print('CUSTOM HANDLER LOADED! \'' + self.name + '\'')

@@ -11,6 +11,10 @@ class Project:
         if not path.endswith('/'):
             path += '/'
 
+        if not src_path.endswith('/'):
+            src_path += '/'
+        
+
         self.config = toml.load(toml_path)
         self.project = self.config['project']
 
@@ -18,12 +22,15 @@ class Project:
             raise RuntimeError('\'project\' key not defined')
 
         self.project_dir = path + getConfig(self.project, 'name') + '/'
-        self.src_dir = self.project_dir + src_path + '/'
+        self.src_dir = self.project_dir + src_path
 
-        self.config = includeTomls(self.config, getConfig(self.project, 'includes'))
+        print(f'Project name: {self.project["name"]}\nProject dir: {self.project_dir}\nSource dir: {self.src_dir}')
+
+        self.config = includeTomls(self.config, getConfig(self.project, 'includes', True))
         self.project = self.config['project'] # update project
 
         Define.fromDefines(getConfig(self.config, 'defines'))
+        Define.add('project_name', self.project['name'])
 
         self.packages = getConfig(self.project, 'packages')
         self.custom_handlers = CustomHandler.fromCustomHandlers(getConfig(self.project, 'custom_handlers'))
@@ -37,8 +44,8 @@ class Project:
 
     def genCustomHandlers(self):
         for custom in self.custom_handlers:
-            to_handle = getConfig(self.config, custom.array) # get custom array of elements to handle
-            custom.to_handle = to_handle # inject custom array of elements to handle
+            to_handle = getConfig(self.config, custom.key) # get custom key of elements to handle
+            custom.to_handle = to_handle # inject custom key of elements to handle
             custom.generate(self) # generate
 
     def genClasses(self):

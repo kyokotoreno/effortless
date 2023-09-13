@@ -1,5 +1,5 @@
 [project]
-includes = ["dao"]
+includes = ["daoentity", "netbeans"]
 packages = [
     "edu.usta.configuracion",
     "edu.usta.daos",
@@ -12,14 +12,25 @@ packages = [
 [[files]]
 folder = "misLibrerias"
 name = "mariadb-java-client.jar"
-origin = "$"
+origin = "$luzhelena"
 
 [[files]]
 folder = "misLibrerias"
 name = "flatlaf-3.2.jar"
-origin = "$"
+origin = "$luzhelena"
 
 [[files]]
 folder = "miBasedatos"
 name = "%basedatos%.sql"
 create = true
+content = "%basedatos_content%"
+
+[[classes]]
+package = "edu.usta.configuracion"
+name = "MiConexion"
+origin = "$luzhelena"
+
+[[classes]]
+package = "edu.usta.interfaces"
+name = "Funcionalidad"
+origin = "$luzhelena"

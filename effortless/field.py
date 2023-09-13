@@ -8,7 +8,7 @@ class Field:
         self.accessor = getConfig(field, 'accessor')
         self.type = getConfig(field, 'type')
         self.name = getConfig(field, 'name')
-        self.init = getConfig(field, 'init')
+        self.init = getConfig(field, 'init', True)
 
     def fromFields(fields):
         objs = []

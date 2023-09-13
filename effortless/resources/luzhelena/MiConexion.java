@@ -11,7 +11,7 @@ public class MiConexion {
     protected Integer cantidad;
     protected PreparedStatement consulta;
 
-    public Conexion() {
+    public MiConexion() {
         this.usuario = "%user%";
         this.clave = "%pass%";
         this.driver = "org.mariadb.jdbc.Driver";
@@ -24,9 +24,9 @@ public class MiConexion {
         try {
             Class.forName(this.driver);
             this.conexion = DriverManager.getConnection(this.url, this.usuario, this.clave);
-            System.out.printf("%conexion_establecida%\n", this.usuario, this.url);
+            System.out.printf(%conexion_establecida%);
         } catch (ClassNotFoundException | SQLException ex) {
-            Logger.getLogger(Conexion.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(MiConexion.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 }

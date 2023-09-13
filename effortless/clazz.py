@@ -2,7 +2,7 @@ from importlib.resources import files
 from .field import Field
 from .method import Method
 from .define import Define
-from .config import getConfig
+from .config import getConfig, resolveOrigin
 
 class Clazz:
     template = """package {package};
@@ -13,13 +13,13 @@ class Clazz:
 
     def __init__(self, clazz):
         self.package = getConfig(clazz, 'package')
-        self.imports = getConfig(clazz, 'imports')
+        self.imports = getConfig(clazz, 'imports', True)
         self.name = getConfig(clazz, 'name')
-        self.extends = getConfig(clazz, 'extends')
-        self.implements = getConfig(clazz, 'implements')
-        self.fields = Field.fromFields(getConfig(clazz, 'fields'))
-        self.methods = Method.fromMethods(getConfig(clazz, 'methods'))
-        self.origin = getConfig(clazz, 'origin')
+        self.extends = getConfig(clazz, 'extends', True)
+        self.implements = getConfig(clazz, 'implements', True)
+        self.fields = Field.fromFields(getConfig(clazz, 'fields', True))
+        self.methods = Method.fromMethods(getConfig(clazz, 'methods', True))
+        self.origin = getConfig(clazz, 'origin', True)
 
     def fromClasses(classes):
         objs = []
@@ -64,14 +64,17 @@ class Clazz:
                 self.gen_methods += method.generate(t)
 
     def generate(self, project, t):
+        if not self.origin:
+            self.origin = ''
+
         filename = self.name + '.java'
         path = project.src_dir + self.package.replace('.', '/') + '/' + filename
 
         with open(path, 'w') as f:
             self.gen = ''
 
-            if self.origin == '$':
-                self.gen = files('effortless.resources').joinpath(filename).read_text()
+            if self.origin.startswith('$'):
+                self.gen = files('effortless.resources').joinpath(resolveOrigin(self.origin)).joinpath(filename).read_text()
             elif self.origin:
                 with open(self.origin, 'r') as o:
                     self.gen = o.read()

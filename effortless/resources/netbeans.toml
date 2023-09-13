@@ -1,0 +1,4 @@
+[[project.custom_handlers]]
+name = "Netbeans Project"
+key = "nbproject"
+handler = "netbeans"

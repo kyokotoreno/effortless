@@ -1,0 +1,49 @@
+[project]
+name = "poo_taller014_consultar"
+includes = ["luzhelena"]
+
+[defines]
+basedatos = "bd_revistas"
+basedatos_content = """
+drop database if exists bd_revistas;
+create database bd_revistas;
+
+create table bd_revistas.revistas(
+    cod_revista integer auto_increment,
+    nombre_revista varchar(200) not null,
+    categoria_revista varchar(200) not null,
+    issn_revista varchar(20) not null,
+    primary key(cod_revista)
+);
+
+create table bd_revistas.articulos(
+    cod_articulo integer auto_increment,
+    nombre_articulo varchar(200) not null,
+    cantidad_vistas_articulo smallint not null,
+    open_articulo integer not null,
+    primary key(cod_articulo)
+);
+"""
+user = "user_poo"
+pass = "123456"
+conexion_establecida = "\"[OK] Conexion establecida %s@%s\", this.usuario, this.url"
+
+[nbproject]
+
+[[dao_entities]]
+name = "Revista"
+fields = [
+    { accessor = "private", type = "Integer", name = "cod_revista" },
+    { accessor = "private", type = "String", name = "nombre_revista" },
+    { accessor = "private", type = "String", name = "categoria_revista" },
+    { accessor = "private", type = "String", name = "issn_revista" }
+]
+
+[[dao_entities]]
+name = "Articulo"
+fields = [
+    { accessor = "private", type = "Integer", name = "cod_articulo" },
+    { accessor = "private", type = "String", name = "nombre_articulo" },
+    { accessor = "private", type = "Short", name = "cantidad_vistas_articulo" },
+    { accessor = "private", type = "Integer", name = "open_articulo" }
+]

@@ -1,0 +1,4 @@
+[[project.custom_handlers]]
+name = "DaoEntity"
+key = "dao_entities"
+handler = "dao_entity"
