@@ -1,7 +1,7 @@
 """
 CustomHandler for NetBeans Project
 
-params:
+params: None
 
 """
 

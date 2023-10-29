@@ -2,11 +2,9 @@ from .project import Project
 import sys
 
 try:
-    out = sys.argv[2]
+    Project(sys.argv[1], sys.argv[2]).generate()
 except IndexError:
-    out = None
-
-if out:
-    Project(sys.argv[1], out).generate()
-else:
-    Project(sys.argv[1]).generate()
+    try:
+        Project(sys.argv[1]).generate()
+    except IndexError:
+        print("Usage: python -m effortless <project_config> [output_dir]")

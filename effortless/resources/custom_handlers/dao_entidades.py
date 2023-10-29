@@ -1,5 +1,5 @@
 """
-CustomHandler for DaoEntity
+CustomHandler for Daos & Entidades, Luz Helena
 
 params:
 
@@ -7,6 +7,9 @@ params:
     - entity_imports: list (str)
     - dao_imports: list (str)
     - fields: dict [accessor: str, type: str, name: str]
+    - primary_key: str
+    - table: str
+
 """
 
 from effortless.config import getConfig
@@ -28,7 +31,7 @@ class CustomHandler:
             'name': 'registrar',
             'annotations': ['Override'],
             'arguments': [{'type': '%entity_name%', 'name': 'elObjeto'}],
-            'body': '''cadenaSql = "INSERT INTO %entity_name_plural% (%entity_fields%) VALUES (%values%)";
+            'body': '''cadenaSql = "INSERT INTO %table_name% (%entity_fields%) VALUES (%values%)";
 try {
     consulta = conexion.prepareStatement(cadenaSql);
 %consulta_sets%
@@ -46,20 +49,25 @@ try {
             'name': 'consultar',
             'annotations': ['Override'],
             'arguments': [{'type': 'String', 'name': 'orden'}],
-            'body': '''cadenaSql = "SELECT %entity_fields% FROM %entity_name_plural% ORDER BY " + orden;
+            'body': '''if (orden.isEmpty()) {
+    orden = "%primary_key%";
+}
+            
+cadenaSql = "SELECT %entity_fields% FROM %table_name% ORDER BY " + orden;
+
 try {
     consulta = conexion.prepareStatement(cadenaSql);
     registros = consulta.executeQuery();
     cantidad = registros.getFetchSize();
     registros.next();
-    ArrayList<%entity_name%> %entity_name_plural% = new ArrayList<%entity_name%>();
+    ArrayList<%entity_name%> %table_name% = new ArrayList<%entity_name%>();
     for (int i = 0; i < cantidad; i++) {
         %entity_name% %entity_name_lower% = new %entity_name%();
 %consulta_gets%
-        %entity_name_plural%.add(%entity_name_lower%);
+        %table_name%.add(%entity_name_lower%);
     }
     conexion.close();
-    return %entity_name_plural%;
+    return %table_name%;
 } catch (SQLException ex) {
     Logger.getLogger(%dao_name%.class.getName()).log(Level.SEVERE, null, ex);
     return null;
@@ -70,7 +78,23 @@ try {
             'return_type': '%entity_name%',
             'name': 'buscar',
             'annotations': ['Override'],
-            'arguments': [{'type': 'Integer', 'name': 'llavePrimaria'}]
+            'arguments': [{'type': 'Integer', 'name': 'llavePrimaria'}],
+            'body': '''cadenaSql = "SELECT %entity_fields% FROM %table_name% WHERE %primary_key% = ?";
+try {
+    consulta = conexion.prepareStatement(cadenaSql);
+    consulta.setInt(1, llavePrimaria);
+    registros = consulta.executeQuery();
+    cantidad = registros.getFetchSize();
+    registros.next();
+    %entity_name% %entity_name_lower% = new %entity_name%();
+%consulta_gets%
+    %table_name%.add(%entity_name_lower%);
+    conexion.close();
+    return %entity_name_lower%;
+} catch (SQLException ex) {
+    Logger.getLogger(%dao_name%.class.getName()).log(Level.SEVERE, null, ex);
+    return null;
+}'''
         },
         'delete': {
             'accessor': 'public',
@@ -99,6 +123,8 @@ try {
         self.entity_imports = getConfig(custom, 'entity_imports', True)
         self.dao_imports = getConfig(custom, 'dao_imports', True)
         self.fields = Field.fromFields(getConfig(custom, 'fields'))
+        self.primary_key = getConfig(custom, 'primary_key')
+        self.table = getConfig(custom, 'table')
 
     def fromToHandle(to_handle):
         objs = []
@@ -150,18 +176,17 @@ try {
                 gen_daosetters += f'    // Custom Type {getter.return_type.removesuffix(" ")}, please program manually\n'
                 print(f'WARNING!: Custom Type {getter.return_type.removesuffix(" ")}, please program manually in method register dao_entity \'{self.name}\'')
             else:
-                #f"%entity_name_lower%.{getter.name}(registros.get{type}({getter_i})):\n"
                 gen_daosetters += f'    consulta.set{type}({setter_i}, elObjeto.{getter.name}());\n'
             setter_i += 1
 
-        mfields = [*filter(lambda x : not x.name.startswith(underscore('Cod' + self.name)), self.fields)]
+        mfields = [*filter(lambda x : not x.name.startswith(self.primary_key), self.fields)]
 
         defines = {
             'values': ', '.join(['?'] * len(mfields)),
             'entity_fields': ', '.join(map(lambda x : x.name, mfields)),
             'entity_name': self.name,
             'entity_name_lower': self.name.lower(),
-            'entity_name_plural': self.name.lower() + 's',
+            'table_name': self.table,
             'dao_name': 'Dao' + self.name,
             'consulta_sets': gen_daosetters
         }
@@ -188,11 +213,10 @@ try {
             getter_i += 1
 
         defines = {
-            'values': ', '.join(['?'] * len(self.fields)),
             'entity_fields': ', '.join(map(lambda x : x.name, self.fields)),
             'entity_name': self.name,
             'entity_name_lower': self.name.lower(),
-            'entity_name_plural': self.name.lower() + 's',
+            'table_name': self.table,
             'dao_name': 'Dao' + self.name,
             'consulta_gets': gen_daogetters
         }
@@ -205,11 +229,29 @@ try {
         daoClazz.methods.append(methodConsult)
 
     def genDaoMethodSearch(self, daoClazz):
-        methodSearch = Method(self.dao_methods['search'])
+        getter_i = 1
+        gen_daogetters = ''
+
+        for getter in self.gen_getters:
+            type = self.mapTypeToRegistryType(getter.return_type)
+            if not type:
+                gen_daogetters += f'        // Custom Type {getter.return_type.removesuffix(" ")}, please program manually\n'
+                print(f'WARNING!: Custom Type {getter.return_type.removesuffix(" ")}, please program manually in method consult dao_entity \'{self.name}\'')
+            else:
+                gen_daogetters += f'        {self.name.lower()}.{getter.name.replace("get", "set")}(registros.get{type}({getter_i}));\n'
+            getter_i += 1
 
         defines = {
-            'entity_name': self.name
+            'entity_fields': ', '.join(map(lambda x : x.name, self.fields)),
+            'entity_name': self.name,
+            'entity_name_lower': self.name.lower(),
+            'table_name': self.table,
+            'primary_key': self.primary_key,
+            'dao_name': 'Dao' + self.name,
+            'consulta_gets': gen_daogetters
         }
+
+        methodSearch = Method(self.dao_methods['search'])
 
         methodSearch.return_type = Define.defineWith(methodSearch.return_type, defines)
 
@@ -295,7 +337,7 @@ try {
         entityConstructor.is_constructor = True
         entityConstructor.accessor = 'public'
         entityConstructor.name = self.name
-        mfields = [*filter(lambda x : not x.name.startswith(underscore('Cod' + self.name)), self.fields)]
+        mfields = [*filter(lambda x : not x.name.startswith(self.primary_key), self.fields)]
 
         constSetters = []
         entityConstructor.arguments = []

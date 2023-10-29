@@ -1,5 +1,5 @@
 [project]
-includes = ["daoentity", "netbeans"]
+includes = ["netbeans"]
 packages = [
     "edu.usta.configuracion",
     "edu.usta.daos",
@@ -8,6 +8,11 @@ packages = [
     "edu.usta.iconos",
     "edu.usta.interfaces"
 ]
+
+[[project.custom_handlers]]
+name = "Daos y Entidades"
+key = "entidades"
+handler = "dao_entidades"
 
 [[files]]
 folder = "misLibrerias"
