@@ -174,7 +174,7 @@ try {
             type = self.mapTypeToRegistryType(getter.return_type)
             if not type:
                 gen_daosetters += f'    // Custom Type {getter.return_type.removesuffix(" ")}, please program manually\n'
-                print(f'WARNING!: Custom Type {getter.return_type.removesuffix(" ")}, please program manually in method register dao_entity \'{self.name}\'')
+                print(f'WARNING!: Custom Type {getter.return_type.removesuffix(" ")}, please program manually in method register dao \'{self.name}\'')
             else:
                 gen_daosetters += f'    consulta.set{type}({setter_i}, elObjeto.{getter.name}());\n'
             setter_i += 1
@@ -207,7 +207,7 @@ try {
             type = self.mapTypeToRegistryType(getter.return_type)
             if not type:
                 gen_daogetters += f'        // Custom Type {getter.return_type.removesuffix(" ")}, please program manually\n'
-                print(f'WARNING!: Custom Type {getter.return_type.removesuffix(" ")}, please program manually in method consult dao_entity \'{self.name}\'')
+                print(f'WARNING!: Custom Type {getter.return_type.removesuffix(" ")}, please program manually in method consult dao \'{self.name}\'')
             else:
                 gen_daogetters += f'        {self.name.lower()}.{getter.name.replace("get", "set")}(registros.get{type}({getter_i}));\n'
             getter_i += 1
@@ -217,6 +217,7 @@ try {
             'entity_name': self.name,
             'entity_name_lower': self.name.lower(),
             'table_name': self.table,
+            'primary_key': self.primary_key,
             'dao_name': 'Dao' + self.name,
             'consulta_gets': gen_daogetters
         }
@@ -236,7 +237,7 @@ try {
             type = self.mapTypeToRegistryType(getter.return_type)
             if not type:
                 gen_daogetters += f'        // Custom Type {getter.return_type.removesuffix(" ")}, please program manually\n'
-                print(f'WARNING!: Custom Type {getter.return_type.removesuffix(" ")}, please program manually in method consult dao_entity \'{self.name}\'')
+                print(f'WARNING!: Custom Type {getter.return_type.removesuffix(" ")}, please program manually in method search dao \'{self.name}\'')
             else:
                 gen_daogetters += f'        {self.name.lower()}.{getter.name.replace("get", "set")}(registros.get{type}({getter_i}));\n'
             getter_i += 1
@@ -254,6 +255,7 @@ try {
         methodSearch = Method(self.dao_methods['search'])
 
         methodSearch.return_type = Define.defineWith(methodSearch.return_type, defines)
+        methodSearch.body = Define.defineWith(methodSearch.body, defines)
 
         daoClazz.methods.append(methodSearch)
 
