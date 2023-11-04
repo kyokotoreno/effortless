@@ -32,10 +32,15 @@ class CustomHandler:
             'annotations': ['Override'],
             'arguments': [{'type': '%entity_name%', 'name': 'elObjeto'}],
             'body': '''cadenaSql = "INSERT INTO %table_name% (%entity_fields%) VALUES (%values%)";
+
 try {
+
     consulta = conexion.prepareStatement(cadenaSql);
+
 %consulta_sets%
+
     cantidad = consulta.executeUpdate();
+
     conexion.close();
     return cantidad > 0;
 } catch (SQLException ex) {
@@ -57,15 +62,20 @@ cadenaSql = "SELECT %entity_fields% FROM %table_name% ORDER BY " + orden;
 
 try {
     consulta = conexion.prepareStatement(cadenaSql);
+
     registros = consulta.executeQuery();
     cantidad = registros.getFetchSize();
-    registros.next();
+
     ArrayList<%entity_name%> %table_name% = new ArrayList<%entity_name%>();
-    for (int i = 0; i < cantidad; i++) {
+
+    while (registros.next()) {
         %entity_name% %entity_name_lower% = new %entity_name%();
+
 %consulta_gets%
+
         %table_name%.add(%entity_name_lower%);
     }
+
     conexion.close();
     return %table_name%;
 } catch (SQLException ex) {
@@ -80,15 +90,20 @@ try {
             'annotations': ['Override'],
             'arguments': [{'type': 'Integer', 'name': 'llavePrimaria'}],
             'body': '''cadenaSql = "SELECT %entity_fields% FROM %table_name% WHERE %primary_key% = ?";
+
 try {
     consulta = conexion.prepareStatement(cadenaSql);
     consulta.setInt(1, llavePrimaria);
+
     registros = consulta.executeQuery();
     cantidad = registros.getFetchSize();
+
     registros.next();
+
     %entity_name% %entity_name_lower% = new %entity_name%();
+
 %consulta_gets%
-    %table_name%.add(%entity_name_lower%);
+
     conexion.close();
     return %entity_name_lower%;
 } catch (SQLException ex) {
@@ -101,7 +116,20 @@ try {
             'return_type': 'Boolean',
             'name': 'eliminar',
             'annotations': ['Override'],
-            'arguments': [{'type': 'Integer', 'name': 'llavePrimaria'}]
+            'arguments': [{'type': 'Integer', 'name': 'llavePrimaria'}],
+            'body': '''cadenaSql = "DELETE FROM %table_name% WHERE %primary_key% = ?";
+
+try {
+    consulta = conexion.prepareStatement(cadenaSql);
+    consulta.setInt(1, llavePrimaria);
+
+    cantidad = consulta.executeUpdate();
+
+    return cantidad > 0;
+} catch (SQLException ex) {
+    Logger.getLogger(%dao_name%.class.getName()).log(Level.SEVERE, null, ex);
+    return false;
+}''',
         },
         'update': {
             'accessor': 'public',
@@ -173,7 +201,7 @@ try {
         for getter in list(filter(lambda x : not x.name.startswith('getCod' + self.name), self.gen_getters)):
             type = self.mapTypeToRegistryType(getter.return_type)
             if not type:
-                gen_daosetters += f'    // Custom Type {getter.return_type.removesuffix(" ")}, please program manually\n'
+                gen_daosetters += f'        // Custom Type {getter.return_type.removesuffix(" ")}, please program manually\n'
                 print(f'WARNING!: Custom Type {getter.return_type.removesuffix(" ")}, please program manually in method register dao \'{self.name}\'')
             else:
                 gen_daosetters += f'    consulta.set{type}({setter_i}, elObjeto.{getter.name}());\n'
@@ -260,7 +288,15 @@ try {
         daoClazz.methods.append(methodSearch)
 
     def genDaoMethodDelete(self, daoClazz):
+        defines = {
+            'table_name': self.table,
+            'primary_key': self.primary_key,
+            'dao_name': 'Dao' + self.name
+        }
+
         methodDelete = Method(self.dao_methods['delete'])
+
+        methodDelete.body = Define.defineWith(methodDelete.body, defines)
 
         daoClazz.methods.append(methodDelete)
 
