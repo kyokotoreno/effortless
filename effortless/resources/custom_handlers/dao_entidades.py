@@ -34,7 +34,6 @@ class CustomHandler:
             'body': '''cadenaSql = "INSERT INTO %table_name% (%entity_fields%) VALUES (%values%)";
 
 try {
-
     consulta = conexion.prepareStatement(cadenaSql);
 
 %consulta_sets%
@@ -57,7 +56,7 @@ try {
             'body': '''if (orden.isEmpty()) {
     orden = "%primary_key%";
 }
-            
+
 cadenaSql = "SELECT %entity_fields% FROM %table_name% ORDER BY " + orden;
 
 try {
@@ -125,6 +124,7 @@ try {
 
     cantidad = consulta.executeUpdate();
 
+    conexion.close();
     return cantidad > 0;
 } catch (SQLException ex) {
     Logger.getLogger(%dao_name%.class.getName()).log(Level.SEVERE, null, ex);
@@ -136,13 +136,43 @@ try {
             'return_type': 'Boolean',
             'name': 'actualizar',
             'annotations': ['Override'],
-            'arguments': [{'type': '%entity_name%', 'name': 'elObjeto'}]
+            'arguments': [{'type': '%entity_name%', 'name': 'elObjeto'}],
+            'body': '''cadenaSql = "UPDATE %table_name% SET %entity_set_fields% WHERE %primary_key% = ?";
+
+try {
+    consulta = conexion.prepareStatement(cadenaSql);
+
+%consulta_sets%
+
+    cantidad = consulta.executeUpdate();
+
+    conexion.close();
+    return cantidad > 0;
+} catch (SQLException ex) {
+    Logger.getLogger(%dao_name%.class.getName()).log(Level.SEVERE, null, ex);
+    return false;
+}'''
         },
         'total': {
             'accessor': 'public',
             'return_type': 'Integer',
             'name': 'totalRegistros',
-            'annotations': ['Override']
+            'annotations': ['Override'],
+            'body': '''cadenaSql = "SELECT COUNT(%primary_key%) FROM %table_name%";
+
+try {
+    consulta = conexion.prepareStatement(cadenaSql);
+    registros = consulta.executeQuery();
+    
+    registros.next();
+    cantidad = registros.getInt(1);
+
+    conexion.close();
+    return cantidad;
+} catch (SQLException ex) {
+    Logger.getLogger(%dao_name%.class.getName()).log(Level.SEVERE, null, ex);
+    return null;
+}'''
         },
     }
 
@@ -198,10 +228,10 @@ try {
     def genDaoMethodRegister(self, daoClazz):
         setter_i = 1
         gen_daosetters = ''
-        for getter in list(filter(lambda x : not x.name.startswith('getCod' + self.name), self.gen_getters)):
+        for getter in list(filter(lambda x : not x.name.startswith(camelize('get_' + self.primary_key, False)), self.gen_getters)):
             type = self.mapTypeToRegistryType(getter.return_type)
             if not type:
-                gen_daosetters += f'        // Custom Type {getter.return_type.removesuffix(" ")}, please program manually\n'
+                gen_daosetters += f'    // Custom Type {getter.return_type.removesuffix(" ")}, please program manually\n'
                 print(f'WARNING!: Custom Type {getter.return_type.removesuffix(" ")}, please program manually in method register dao \'{self.name}\'')
             else:
                 gen_daosetters += f'    consulta.set{type}({setter_i}, elObjeto.{getter.name}());\n'
@@ -264,10 +294,10 @@ try {
         for getter in self.gen_getters:
             type = self.mapTypeToRegistryType(getter.return_type)
             if not type:
-                gen_daogetters += f'        // Custom Type {getter.return_type.removesuffix(" ")}, please program manually\n'
+                gen_daogetters += f'     // Custom Type {getter.return_type.removesuffix(" ")}, please program manually\n'
                 print(f'WARNING!: Custom Type {getter.return_type.removesuffix(" ")}, please program manually in method search dao \'{self.name}\'')
             else:
-                gen_daogetters += f'        {self.name.lower()}.{getter.name.replace("get", "set")}(registros.get{type}({getter_i}));\n'
+                gen_daogetters += f'    {self.name.lower()}.{getter.name.replace("get", "set")}(registros.get{type}({getter_i}));\n'
             getter_i += 1
 
         defines = {
@@ -301,21 +331,49 @@ try {
         daoClazz.methods.append(methodDelete)
 
     def genDaoMethodUpdate(self, daoClazz):
-        methodDelete = Method(self.dao_methods['update'])
+        setter_i = 1
+        gen_daosetters = ''
+        for getter in list(filter(lambda x : not x.name.startswith(camelize('get_' + self.primary_key, False)), self.gen_getters)):
+            type = self.mapTypeToRegistryType(getter.return_type)
+            if not type:
+                gen_daosetters += f'    // Custom Type {getter.return_type.removesuffix(" ")}, please program manually\n'
+                print(f'WARNING!: Custom Type {getter.return_type.removesuffix(" ")}, please program manually in method register dao \'{self.name}\'')
+            else:
+                gen_daosetters += f'    consulta.set{type}({setter_i}, elObjeto.{getter.name}());\n'
+            setter_i += 1
+
+        mfields = [*filter(lambda x : not x.name.startswith(self.primary_key), self.fields)]
+
+        methodUpdate = Method(self.dao_methods['update'])
 
         defines = {
-            'entity_name': self.name
+            'entity_name': self.name,
+            'table_name': self.table,
+            'primary_key': self.primary_key,
+            'dao_name': 'Dao' + self.name,
+            'entity_set_fields': ', '.join(map(lambda x: x.name + ' = ?', mfields)),
+            'consulta_sets': gen_daosetters
         }
 
-        for argument in methodDelete.arguments:
+        for argument in methodUpdate.arguments:
             argument.type = Define.defineWith(argument.type, defines)
 
-        daoClazz.methods.append(methodDelete)
+        methodUpdate.body = Define.defineWith(methodUpdate.body, defines)
+
+        daoClazz.methods.append(methodUpdate)
 
     def genDaoMethodTotal(self, daoClazz):
-        methodDelete = Method(self.dao_methods['total'])
+        defines = {
+            'table_name': self.table,
+            'primary_key': self.primary_key,
+            'dao_name': 'Dao' + self.name
+        }
 
-        daoClazz.methods.append(methodDelete)
+        methodTotal = Method(self.dao_methods['total'])
+
+        methodTotal.body = Define.defineWith(methodTotal.body, defines)
+
+        daoClazz.methods.append(methodTotal)
 
     def genDaoClazz(self, project):
         if not self.dao_imports:
